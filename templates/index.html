@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkillSync: Resume Matcher</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .animate-fade-in-up {
+            animation: fadeInUp 0.8s ease-out;
+        }
+        
+        body {
+            overflow-x: hidden;
+        }
+    </style>
+</head>
+<body class="bg-gray-950 relative"> 
+    
+    <header class="bg-white shadow-xl relative z-20">
+        <div class="max-w-6xl mx-auto px-4 py-6 flex flex-col items-center justify-center">
+            <div class="animate-fade-in-up flex items-center justify-center">
+                <svg class="w-12 h-12 mr-4" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M50 20L50 80" stroke="#DC2626" stroke-width="8" stroke-linecap="round"/>
+                    <path d="M30 40C30 30 40 20 50 20C60 20 70 30 70 40" stroke="#DC2626" stroke-width="6" stroke-linecap="round"/>
+                    <path d="M30 60C30 70 40 80 50 80C60 80 70 70 70 60" stroke="#DC2626" stroke-width="6" stroke-linecap="round"/>
+                    <rect x="20" y="30" width="20" height="20" rx="4" fill="#000000"/>
+                    <rect x="60" y="50" width="20" height="20" rx="4" fill="#000000"/>
+                    <path d="M40 40H60V60H40V40Z" stroke="#000000" stroke-width="4" stroke-linecap="round"/>
+                </svg>
+                <h1 class="text-5xl font-extrabold text-black"><span class="font-extrabold text-black">Skill</span><span class="text-black">Sync</span></h1>
+            </div>
+            <p class="text-black text-lg font-light mt-3 tracking-wide text-center">Precision AI matching for your next big career move</p>
+        </div>
+    </header>
+
+    <div class="relative min-h-[calc(100vh-120px)] py-12 bg-cover bg-center bg-no-repeat bg-fixed" style="background: linear-gradient(135deg, rgba(20,20,30,0.95) 0%, rgba(40,10,20,0.95) 50%, rgba(20,30,40,0.95) 100%), url('{{ url_for('static', filename='images/match-bg.jpg') }}'); background-size: cover; background-position: center; background-attachment: fixed;">
+        
+        <div class="absolute inset-0 bg-black/40 z-0"></div>
+        
+        <div class="relative max-w-4xl mx-auto z-10 px-4">
+            <div id="uploadSection" class="max-w-xl mx-auto p-8 bg-gray-900/80 backdrop-blur-xl rounded-lg shadow-2xl border border-red-500/30">
+                <h2 class="text-3xl font-bold text-white mb-6 text-center">Upload Your Resume</h2>
+                <div class="space-y-4">
+                    <div class="border-2 border-dashed border-red-500/50 rounded-lg p-8 text-center cursor-pointer hover:border-red-500 hover:shadow-[0_0_15px_rgba(220,38,38,0.3)] transition-all duration-300"
+                         onclick="document.getElementById('resumeInput').click()">
+                        <svg class="mx-auto h-16 w-16 text-red-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        <p class="text-white font-semibold text-lg">Click to upload or drag and drop</p>
+                        <p class="text-gray-400 text-sm mt-1">PDF files up to 5MB</p>
+                    </div>
+                    <input type="file" id="resumeInput" name="resume" accept=".pdf" class="hidden" />
+                    
+                    <div id="fileSelected" class="hidden p-4 bg-green-900/30 border-2 border-green-500/50 rounded-lg">
+                        <p class="text-green-300 font-semibold text-sm">
+                            ✓ Selected: <span id="fileName" class="font-normal text-white"></span>
+                        </p>
+                    </div>
+
+                    <div class="p-4 bg-black/40 rounded-lg border border-red-500/20">
+                        <label class="block text-sm font-semibold text-white mb-3">What are you looking for?</label>
+                        <div class="flex gap-4">
+                            <label class="flex items-center cursor-pointer group">
+                                <input type="radio" name="jobType" id="jobTypeJob" value="job" checked class="w-4 h-4 accent-red-500">
+                                <span class="ml-2 text-gray-300 font-medium group-hover:text-white transition">💼 Full-Time Job</span>
+                            </label>
+                            <label class="flex items-center cursor-pointer group">
+                                <input type="radio" name="jobType" id="jobTypeInternship" value="internship" class="w-4 h-4 accent-red-500">
+                                <span class="ml-2 text-gray-300 font-medium group-hover:text-white transition">🎓 Internship</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <button id="uploadBtn" onclick="uploadResume()" disabled
+                            class="w-full bg-red-600 text-white py-3 rounded-lg font-bold text-lg hover:bg-red-700 transition-all duration-300 disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed shadow-md hover:shadow-[0_0_15px_rgba(220,38,38,0.5)]">
+                        Sync My Career
+                    </button>
+
+                    <div id="loadingSpinner" class="hidden text-center py-6">
+                        <div class="inline-block">
+                            <div class="animate-spin rounded-full h-10 w-10 border-4 border-gray-700 border-t-red-600"></div>
+                        </div>
+                        <p class="text-red-400 text-sm mt-4 font-medium animate-pulse">Analyzing neural pathways...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="resultsSection" class="hidden mt-8">
+                <div class="bg-gray-900/80 backdrop-blur-xl rounded-lg shadow-2xl border-l-4 border-red-500 p-8 mb-8">
+                    <h2 class="text-3xl font-bold text-white mb-6">🎯 Recommended Career Domains</h2>
+                    <div id="careerDomainsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                    <div class="bg-gray-900/80 backdrop-blur-xl rounded-lg shadow-2xl border-l-4 border-red-500 p-8">
+                        <h2 class="text-2xl font-bold text-white mb-6">💼 Detected Skills</h2>
+                        <div id="skillsContainer" class="flex flex-wrap gap-2">
+                            </div>
+                    </div>
+
+                    <div class="bg-gray-900/80 backdrop-blur-xl rounded-lg shadow-2xl border-l-4 border-red-500 p-8">
+                        <h2 class="text-2xl font-bold text-white mb-6">📈 Experience</h2>
+                        <div id="experienceContainer" class="space-y-4">
+                            </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-900/80 backdrop-blur-xl rounded-lg shadow-2xl border-l-4 border-red-500 p-8 mb-8">
+                    <h2 class="text-2xl font-bold text-white mb-6">🚀 Projects</h2>
+                    <div id="projectsContainer" class="space-y-4">
+                        </div>
+                </div>
+
+                <div class="text-center pb-12">
+                    <button onclick="resetForm()" class="bg-transparent border-2 border-red-500 text-red-500 hover:bg-red-600 hover:text-white py-3 px-8 rounded-lg font-bold hover:shadow-[0_0_15px_rgba(220,38,38,0.5)] transition-all duration-300">
+                        Analyze Another Resume
+                    </button>
+                </div>
+            </div>
+
+            <div id="errorMessage" class="hidden mt-6 max-w-xl mx-auto p-4 bg-red-900/50 border border-red-500 text-red-200 rounded-lg font-medium backdrop-blur-md">
+                <p id="errorText"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const resumeInput = document.getElementById('resumeInput');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const fileSelected = document.getElementById('fileSelected');
+        const fileName = document.getElementById('fileName');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const resultsSection = document.getElementById('resultsSection');
+        const uploadSection = document.getElementById('uploadSection');
+        const errorMessage = document.getElementById('errorMessage');
+        const errorText = document.getElementById('errorText');
+
+        resumeInput.addEventListener('change', function(e) {
+            if (this.files.length > 0) {
+                fileName.textContent = this.files[0].name;
+                fileSelected.classList.remove('hidden');
+                uploadBtn.disabled = false;
+            }
+        });
+
+        const dropZone = document.querySelector('[onclick*="resumeInput"]').parentElement;
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('border-red-400', 'bg-red-900/20');
+        });
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('border-red-400', 'bg-red-900/20');
+        });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('border-red-400', 'bg-red-900/20');
+            resumeInput.files = e.dataTransfer.files;
+            resumeInput.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+
+        async function uploadResume() {
+            if (!resumeInput.files.length) {
+                showError('Please select a file');
+                return;
+            }
+
+            const jobType = document.querySelector('input[name="jobType"]:checked').value;
+            const formData = new FormData();
+            formData.append('resume', resumeInput.files[0]);
+            formData.append('jobType', jobType);
+
+            loadingSpinner.classList.remove('hidden');
+            uploadBtn.classList.add('hidden');
+            errorMessage.classList.add('hidden');
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to analyze resume');
+                }
+
+                displayResults(data.analysis);
+            } catch (error) {
+                showError(error.message);
+                loadingSpinner.classList.add('hidden');
+                uploadBtn.classList.remove('hidden');
+            }
+        }
+
+        function displayResults(analysis) {
+            uploadSection.classList.add('hidden');
+            
+            const careerDomainsContainer = document.getElementById('careerDomainsContainer');
+            careerDomainsContainer.innerHTML = '';
+
+            let jobSitesConfig = {};
+            
+            if (analysis.job_type === 'internship') {
+                jobSitesConfig = {
+                    'Web Development': [
+                        { url: 'https://internshala.com/internships/keywords-web%20development/', site: 'Internshala' },
+                        { url: 'https://www.naukri.com/internship-jobs?k=web%20development', site: 'Naukri' }
+                    ],
+                    'AI/ML': [
+                        { url: 'https://internshala.com/internships/keywords-machine%20learning/', site: 'Internshala' },
+                        { url: 'https://www.naukri.com/internship-jobs?k=AI%20ML', site: 'Naukri' }
+                    ],
+                    'Data Science': [
+                        { url: 'https://internshala.com/internships/keywords-data%20science/', site: 'Internshala' },
+                        { url: 'https://www.naukri.com/internship-jobs?k=data%20science', site: 'Naukri' }
+                    ],
+                    'Cloud Computing': [
+                        { url: 'https://internshala.com/internships/keywords-cloud/', site: 'Internshala' },
+                        { url: 'https://www.naukri.com/internship-jobs?k=cloud', site: 'Naukri' }
+                    ],
+                    'DevOps': [
+                        { url: 'https://internshala.com/internships/keywords-DevOps/', site: 'Internshala' },
+                        { url: 'https://www.naukri.com/internship-jobs?k=devops', site: 'Naukri' }
+                    ]
+                };
+            } else {
+                jobSitesConfig = {
+                    'Web Development': [
+                        { url: 'https://www.naukri.com/jobs-search?k=web%20development&experience=0,1,2,3,4,5', site: 'Naukri Jobs' }
+                    ],
+                    'AI/ML': [
+                        { url: 'https://www.naukri.com/jobs-search?k=AI%20ML&experience=0,1,2,3,4,5', site: 'Naukri Jobs' }
+                    ],
+                    'Data Science': [
+                        { url: 'https://www.naukri.com/jobs-search?k=data%20science&experience=0,1,2,3,4,5', site: 'Naukri Jobs' }
+                    ],
+                    'Cloud Computing': [
+                        { url: 'https://www.naukri.com/jobs-search?k=cloud&experience=0,1,2,3,4,5', site: 'Naukri Jobs' }
+                    ],
+                    'DevOps': [
+                        { url: 'https://www.naukri.com/jobs-search?k=devops&experience=0,1,2,3,4,5', site: 'Naukri Jobs' }
+                    ]
+                };
+            }
+
+            const sortedDomains = Object.entries(analysis.career_domains)
+                .sort((a, b) => b[1] - a[1]);
+
+            sortedDomains.forEach(([domain, score]) => {
+                const confidence = Math.round(score * 100);
+                const jobSites = jobSitesConfig[domain] || [{ url: '#', site: 'Job Portal' }];
+                const bgColor = confidence >= 70 ? 'bg-green-900/20 border-green-500/50' : 
+                               confidence >= 40 ? 'bg-yellow-900/20 border-yellow-500/50' : 
+                               'bg-gray-800/30 border-gray-600/50';
+                
+                const domainCard = document.createElement('div');
+                domainCard.className = `p-6 ${bgColor} rounded-lg border hover:shadow-lg transition-shadow backdrop-blur-md`;
+                
+                let buttonsHTML = jobSites.map((site, idx) => 
+                    `<a href="${site.url}" target="_blank" class="inline-block ${idx === 0 ? 'bg-red-600 hover:bg-red-700' : 'bg-gray-700 hover:bg-gray-600'} text-white font-medium py-2 px-4 rounded transition text-sm mr-2 mt-3">
+                        ${site.site} →
+                    </a>`
+                ).join('');
+                
+                domainCard.innerHTML = `
+                    <h3 class="text-xl font-bold text-white mb-2">${domain}</h3>
+                    <div class="mb-4">
+                        <div class="text-3xl font-bold text-red-500">${confidence}% Match</div>
+                        <div class="w-full bg-gray-800 rounded-full h-2 mt-3 border border-gray-700">
+                            <div class="bg-gradient-to-r from-red-600 to-red-400 h-2 rounded-full" style="width: ${confidence}%"></div>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        ${buttonsHTML}
+                    </div>
+                `;
+                careerDomainsContainer.appendChild(domainCard);
+            });
+
+            const skillsContainer = document.getElementById('skillsContainer');
+            skillsContainer.innerHTML = '';
+            if (analysis.skills.length > 0) {
+                analysis.skills.forEach(skill => {
+                    const skillBadge = document.createElement('span');
+                    skillBadge.className = 'bg-black/50 text-red-400 text-sm font-semibold px-4 py-2 rounded-full border border-red-500/30';
+                    skillBadge.textContent = skill;
+                    skillsContainer.appendChild(skillBadge);
+                });
+            } else {
+                skillsContainer.innerHTML = '<p class="text-gray-400 text-sm">No skills detected</p>';
+            }
+
+            const experienceContainer = document.getElementById('experienceContainer');
+            experienceContainer.innerHTML = '';
+            if (analysis.experiences.length > 0) {
+                analysis.experiences.forEach(exp => {
+                    const expDiv = document.createElement('div');
+                    expDiv.className = 'p-4 bg-black/40 rounded-lg border border-red-500/20';
+                    expDiv.innerHTML = `
+                        <h4 class="font-bold text-white text-lg">${exp.title || 'Position'}</h4>
+                        <p class="text-gray-400 text-sm mt-1">${exp.company || 'Company'}</p>
+                    `;
+                    experienceContainer.appendChild(expDiv);
+                });
+            } else {
+                experienceContainer.innerHTML = '<p class="text-gray-400 text-sm">No experience detected</p>';
+            }
+
+            const projectsContainer = document.getElementById('projectsContainer');
+            projectsContainer.innerHTML = '';
+            if (analysis.projects.length > 0) {
+                analysis.projects.forEach(project => {
+                    const projectDiv = document.createElement('div');
+                    projectDiv.className = 'p-5 bg-black/40 rounded-lg border border-red-500/20';
+                    projectDiv.innerHTML = `
+                        <p class="text-gray-300 leading-relaxed">${project.description || 'Project detected'}</p>
+                    `;
+                    projectsContainer.appendChild(projectDiv);
+                });
+            } else {
+                projectsContainer.innerHTML = '<p class="text-gray-400 text-sm">No projects detected</p>';
+            }
+
+            resultsSection.classList.remove('hidden');
+            loadingSpinner.classList.add('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function showError(message) {
+            errorText.textContent = message;
+            errorMessage.classList.remove('hidden');
+        }
+
+        function resetForm() {
+            resumeInput.value = '';
+            fileSelected.classList.add('hidden');
+            uploadBtn.disabled = true;
+            uploadBtn.classList.remove('hidden');
+            resultsSection.classList.add('hidden');
+            uploadSection.classList.remove('hidden');
+            errorMessage.classList.add('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
